@@ -57,7 +57,8 @@ Open `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on…* → 
 
 1. Open a conversation on [claude.ai](https://claude.ai).
 2. Click the **Chat Exporter for Claude** icon in the toolbar, or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>.
-   If you can't see the icon, open the 🧩 extensions menu and pin it.
+   If you can't see the icon, open the 🧩 extensions menu and pin it. The icon is greyed out unless the current tab shows a Claude chat (`https://claude.ai/chat/…`).
+   On **Firefox for Android** the button is in the ⋮ menu under *Extensions*.
 3. Leave the page alone while the extension scrolls through the chat. A small status box in the bottom-right corner shows the progress.
 4. Choose where to save the `.html` file. The file name is the chat title plus the date, for example `My chat (2026-10-15).html`.
 
@@ -132,6 +133,16 @@ Push a version tag. The GitHub Actions pipeline sets the manifest version from t
 git tag v0.2.0
 git push origin v0.2.0
 ```
+
+#### Automatic upload to addons.mozilla.org
+
+If the repository secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` are set, the pipeline also submits every tagged version to addons.mozilla.org with `web-ext sign --channel listed`. The version is published as soon as Mozilla approves it.
+
+1. Create an API key at <https://addons.mozilla.org/developers/addon/api/key/>.
+2. Add it to the repository: *Settings → Secrets and variables → Actions*. The JWT issuer goes into `AMO_JWT_ISSUER`, the JWT secret into `AMO_JWT_SECRET`.
+3. Submit the first version manually through the Developer Hub, because the listing (description, categories, …) is created there. After that, every tag uploads automatically.
+
+Every version uploaded to AMO needs a new version number, so never re-use a tag.
 
 ## Contributing
 

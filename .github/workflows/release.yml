@@ -12,6 +12,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Optional: API key from https://addons.mozilla.org/developers/addon/api/key/
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,3 +64,12 @@ jobs:
             --title "Chat Exporter for Claude ${{ steps.version.outputs.version }}" \
             --generate-notes \
             --notes "Firefox extension package (unsigned). See the README for installation instructions."
+
+      # Submit the new version to addons.mozilla.org (listed). Skipped if the AMO secrets are not set.
+      # Does not wait for Mozilla's review; the version goes live once it is approved.
+      - name: Submit to addons.mozilla.org
+        if: github.ref_type == 'tag' && env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        run: |
+          npx --yes web-ext@8 sign --source-dir extension --artifacts-dir dist-amo \
+            --channel listed --approval-timeout 0 \
+            --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
