@@ -12,6 +12,8 @@ Repo: https://github.com/brokoskokoli/chat-exporter-for-claude · AMO-Slug: `cha
 | `extension/background.js` | Toolbar-Button (aktiv nur auf `https://claude.ai/chat/<id>`, sonst ausgegraut) und Download auf dem Desktop |
 | `assets/icon.svg` | Quelle der Icons; PNGs in `extension/icons/` mit `rsvg-convert` erzeugt (16/32/48/96/128) |
 | `.github/workflows/release.yml` | Build, Release und Upload zu AMO bei jedem `v*`-Tag |
+| `.github/dependabot.yml` | Dependabot hält die Actions aktuell (monatlich, ein gebündelter PR) |
+| `docs/` | Detail-Doku, siehe unten |
 | `scripts/set-amo-secrets.sh` | Legt die AMO-API-Schlüssel als GitHub-Secrets an |
 | `store/listing.md` | Texte für den Store-Eintrag (EN/DE) und Hinweise für die Prüfer |
 
@@ -42,27 +44,10 @@ npx web-ext build --source-dir extension --artifacts-dir . --overwrite-dest --fi
 
 `*.xpi` und `*.zip` stehen in `.gitignore`.
 
-## Aufbau von claude.ai (Stand 2026-10)
+## Weiterführende Doku (nur bei Bedarf lesen)
 
-- Nachrichten: `[data-testid="transcript-row"]` mit `data-index` (0…n), darin `[data-testid="user-message"]` bzw. `[data-testid="assistant-message"]`.
-- **Die Liste ist virtualisiert:** Im DOM stehen nur die sichtbaren Zeilen, dazu Platzhalter `transcript-spacer`. Der Export sucht deshalb den scrollbaren Container, scrollt von oben in Schritten durch, klont jede Zeile anhand von `data-index` und prüft am Ende, ob Indizes fehlen.
-- `<html>` hat die Klasse `scroll-smooth`. Deshalb mit `scrollTo({ behavior: "instant" })` scrollen, sonst werden Zeilen übersprungen.
-- Die Stylesheets (u. a. von `assets-proxy.anthropic.com`) lassen sich auslesen (`cssRules`), und die Schriften sind per CORS abrufbar. Eingebettet werden nur die Schriften, die tatsächlich verwendet werden.
-- Entfernt werden Aktions-Buttons (`message-actions`, `action-bar-*`, Copy/Retry/Edit …).
-- Wenn Anthropic das Layout ändert, sind meist zuerst `ROW_SEL` und `REMOVE_SELECTORS` in `content.js` anzupassen.
-
-## Firefox für Android
-
-- `downloads.download()` startet auf Android nicht, und `saveAs` wird dort nicht unterstützt. Auf Android lädt deshalb die Seite selbst herunter (`pageDownload` in `content.js`: Blob aus dem Seitenkontext über `wrappedJSObject` und `cloneInto`, dann `<a download>`). Am Desktop läuft der Download über die Downloads-API, bei einem Fehler nimmt er denselben Weg wie auf Android.
-- `commands` (Alt+Shift+E) gibt es auf Android nicht. Der Button liegt dort im ⋮-Menü unter „Erweiterungen“.
-- So auf einem Android-Gerät testen:
-  ```bash
-  PATH="$HOME/Library/Android/sdk/platform-tools:$PATH" npx web-ext run -t firefox-android \
-    --source-dir extension --android-device <ID aus `adb devices`> --firefox-apk org.mozilla.firefox \
-    --adb-bin "$HOME/Library/Android/sdk/platform-tools/adb"
-  ```
-  Dafür müssen auf dem Handy USB-Debugging und in Firefox „Remote-Debugging über USB“ (Einstellungen → Entwicklerwerkzeuge) eingeschaltet sein. Das Release-Firefox schreibt keine Konsolen-Logs der Extension ins Android-Systemprotokoll (`logcat`).
-- Kompatibilität von APIs vor der Benutzung in den MDN-Daten nachschlagen (`mdn/browser-compat-data`, `webextensions/…`) und nicht aus dem Gedächtnis annehmen.
+- [docs/claude-ai-dom.md](docs/claude-ai-dom.md): Aufbau von claude.ai (virtualisierte Nachrichtenliste, Selektoren, Scrollen, Styles und Schriften). Lesen, wenn sich das Layout von claude.ai geändert hat oder der Export Nachrichten auslässt.
+- [docs/firefox-android.md](docs/firefox-android.md): Firefox für Android (Download-Weg, nicht unterstützte APIs, Test per USB mit `web-ext run -t firefox-android`). Lesen, wenn es um Android oder um Downloads geht.
 
 ## Testen am Desktop
 
