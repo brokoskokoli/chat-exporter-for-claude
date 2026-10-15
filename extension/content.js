@@ -364,13 +364,42 @@ ${rows.map((r) => r.outerHTML).join("\n")}
   // Für Tests im Browser direkt aufrufbar.
   window.__claudeHtmlExport = exportChat;
 
+  const IS_ANDROID = /Android/i.test(navigator.userAgent);
+
+  // Download direkt aus der Seite heraus (wie ein normaler Website-Download).
+  // Wird auf Android genutzt, weil downloads.download() dort nicht zuverlässig startet.
+  function pageDownload(html, filename) {
+    const w = window.wrappedJSObject || window;
+    const clone = typeof cloneInto === "function" ? (v) => cloneInto(v, w) : (v) => v;
+    const blob = new w.Blob(clone([html]), clone({ type: "text/html;charset=utf-8" }));
+    const url = w.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => w.URL.revokeObjectURL(url), 60_000);
+  }
+
+  async function saveFile(html, filename) {
+    if (IS_ANDROID) return pageDownload(html, filename);
+    try {
+      await browser.runtime.sendMessage({ type: "claude-export:download", html, filename });
+    } catch (e) {
+      console.warn("[Chat Exporter for Claude] downloads API failed, falling back", e);
+      pageDownload(html, filename);
+    }
+  }
+
   async function run() {
     if (running) return;
     running = true;
     try {
       toast(MSG.start);
       const { html, filename, count, missing } = await exportChat(toast);
-      await browser.runtime.sendMessage({ type: "claude-export:download", html, filename });
+      await saveFile(html, filename);
       toast(
         missing.length ? MSG.doneMissing(count, missing.length) : MSG.done(count),
         { done: true }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Chat Exporter for Claude",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Export your current Claude chat (claude.ai) as a single self-contained HTML file that looks exactly like the chat. Unofficial, not affiliated with Anthropic.",
   "homepage_url": "https://github.com/brokoskokoli/chat-exporter-for-claude",
   "browser_specific_settings": {

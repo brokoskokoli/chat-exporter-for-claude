@@ -19,7 +19,11 @@ browser.runtime.onMessage.addListener(async (msg) => {
   const blob = new Blob([msg.html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   try {
-    await browser.downloads.download({ url, filename: msg.filename, saveAs: true });
+    // Firefox für Android kennt die Option "saveAs" nicht.
+    const { os } = await browser.runtime.getPlatformInfo();
+    const options = { url, filename: msg.filename };
+    if (os !== "android") options.saveAs = true;
+    await browser.downloads.download(options);
   } finally {
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
