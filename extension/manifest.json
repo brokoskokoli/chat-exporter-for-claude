@@ -1,0 +1,54 @@
+{
+  "manifest_version": 2,
+  "name": "Chat Exporter for Claude",
+  "version": "0.1.0",
+  "description": "Export your current Claude chat (claude.ai) as a single self-contained HTML file that looks exactly like the chat. Unofficial, not affiliated with Anthropic.",
+  "homepage_url": "https://github.com/brokoskokoli/chat-exporter-for-claude",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "chat-exporter-for-claude@brokoskokoli.github.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "downloads",
+    "https://claude.ai/*",
+    "https://assets-proxy.anthropic.com/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
+    "default_title": "Export Claude chat as HTML"
+  },
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": { "default": "Alt+Shift+E" },
+      "description": "Export the current Claude chat as HTML"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

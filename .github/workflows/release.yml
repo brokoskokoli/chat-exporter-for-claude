@@ -1,0 +1,62 @@
+name: Build & Release XPI
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(jq -r .version extension/manifest.json)"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building version $VERSION"
+
+      - name: Set manifest version from tag
+        run: |
+          jq --arg v "${{ steps.version.outputs.version }}" '.version = $v' extension/manifest.json > manifest.tmp
+          mv manifest.tmp extension/manifest.json
+
+      - name: Lint extension
+        run: npx --yes web-ext@8 lint --source-dir extension
+
+      - name: Build XPI
+        run: |
+          npx --yes web-ext@8 build --source-dir extension --artifacts-dir dist --overwrite-dest \
+            --filename "chat-exporter-for-claude-${{ steps.version.outputs.version }}.zip"
+          mv "dist/chat-exporter-for-claude-${{ steps.version.outputs.version }}.zip" \
+             "dist/chat-exporter-for-claude-${{ steps.version.outputs.version }}.xpi"
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chat-exporter-for-claude-${{ steps.version.outputs.version }}
+          path: dist/*.xpi
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.xpi \
+            --title "Chat Exporter for Claude ${{ steps.version.outputs.version }}" \
+            --generate-notes \
+            --notes "Firefox extension package (unsigned). See the README for installation instructions."
