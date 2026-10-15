@@ -23,21 +23,17 @@ jobs:
         with:
           node-version: 22
 
+      # The manifest is packaged exactly as committed; the tag must match its version.
       - name: Determine version
         id: version
         run: |
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(jq -r .version extension/manifest.json)"
+          VERSION="$(jq -r .version extension/manifest.json)"
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "${GITHUB_REF_NAME#v}" != "$VERSION" ]]; then
+            echo "::error file=extension/manifest.json::Tag $GITHUB_REF_NAME does not match manifest version $VERSION. Bump the version in extension/manifest.json, commit, then tag v$VERSION."
+            exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building version $VERSION"
-
-      - name: Set manifest version from tag
-        run: |
-          jq --arg v "${{ steps.version.outputs.version }}" '.version = $v' extension/manifest.json > manifest.tmp
-          mv manifest.tmp extension/manifest.json
 
       - name: Lint extension
         run: npx --yes web-ext@8 lint --source-dir extension

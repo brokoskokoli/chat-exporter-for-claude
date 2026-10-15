@@ -127,12 +127,17 @@ npx web-ext build --source-dir extension --artifacts-dir dist
 
 ### Releasing
 
-Push a version tag. The GitHub Actions pipeline sets the manifest version from the tag, lints, builds `chat-exporter-for-claude-<version>.xpi` and attaches it to a new GitHub release:
+1. Bump `version` in [`extension/manifest.json`](extension/manifest.json) and commit.
+2. Push a matching tag:
 
 ```bash
 git tag v0.2.0
-git push origin v0.2.0
+git push origin main v0.2.0
 ```
+
+The GitHub Actions pipeline checks that the tag matches the manifest version (it fails otherwise), lints, builds `chat-exporter-for-claude-<version>.xpi` and attaches it to a new GitHub release.
+
+The `.xpi` is a plain ZIP of the `extension/` folder, with all files exactly as committed. There is no build step, minification or bundling.
 
 #### Automatic upload to addons.mozilla.org
 
@@ -168,7 +173,7 @@ Sobald die Erweiterung auf addons.mozilla.org veröffentlicht ist, geht die Inst
 
 **Datenschutz:** Es werden keine Daten gesammelt oder übertragen. Alles läuft lokal im Browser.
 
-**Neues Release:** Ein Tag wie `v0.2.0` pushen. Die Pipeline baut daraus automatisch die `.xpi` und legt ein GitHub-Release an.
+**Neues Release:** Zuerst `version` in `extension/manifest.json` hochsetzen und committen. Dann den passenden Tag pushen, z. B. `v0.2.0`. Die Pipeline prüft, ob Tag und Manifest-Version übereinstimmen, baut die `.xpi` und legt ein GitHub-Release an. Wenn die Secrets gesetzt sind, lädt sie die Version außerdem zu addons.mozilla.org hoch. Die `.xpi` ist ein ZIP des Ordners `extension/`, die Dateien darin sind unverändert.
 
 ---
 
